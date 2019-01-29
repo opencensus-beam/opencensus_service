@@ -1,0 +1,15 @@
+{application, opencensus_service,
+ [{description, "OpenCensus reporter for grpc OpenCensus service"},
+  {vsn, "git"},
+  {registered, []},
+  {applications,
+   [kernel,
+    stdlib,
+    grpcbox
+   ]},
+  {env,[]},
+  {modules, []},
+
+  {licenses, ["Apache 2.0"]},
+  {links, [{"Github", "https://github.com/opencensus-beam/opencensus_service"}]}
+ ]}.
