@@ -7,32 +7,25 @@
 
 -behaviour(supervisor).
 
-%% API
 -export([start_link/0]).
 
-%% Supervisor callbacks
 -export([init/1]).
 
 -define(SERVER, ?MODULE).
 
-%%====================================================================
-%% API functions
-%%====================================================================
-
 start_link() ->
     supervisor:start_link({local, ?SERVER}, ?MODULE, []).
 
-%%====================================================================
-%% Supervisor callbacks
-%%====================================================================
-
-%% Child :: #{id => Id, start => {M, F, A}}
-%% Optional keys are restart, shutdown, type, modules.
-%% Before OTP 18 tuples must be used to specify a child. e.g.
-%% Child :: {Id,StartFunc,Restart,Shutdown,Type,Modules}
 init([]) ->
-    {ok, {{one_for_all, 0, 1}, []}}.
+    Name = application:get_env(opencensus_service, channel_name, opencensus_service),
+    Endpoints = application:get_env(opencensus_service, endpoints, [{http, "localhost", 55678, []}]),
+    Options = application:get_env(opencensus_service, channel_options, #{}),
 
-%%====================================================================
-%% Internal functions
-%%====================================================================
+    SupFlags = application:get_env(opencensus_service, sup_flags, #{strategy => one_for_one,
+                                                                    intensity => 1,
+                                                                    period => 5}),
+
+    ChannelSpec = grpcbox_channel_sup:channel_spec(Name, Endpoints, Options),
+    Client = #{id => oc_reporter_client,
+               start => {oc_reporter_client, start_link, []}},
+    {ok, {SupFlags, [ChannelSpec, Client]}}.

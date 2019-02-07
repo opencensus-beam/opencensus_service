@@ -1,9 +1,12 @@
-opencensus_service
+OpenCensus Agent Reporter
 =====
 
-An OTP application
+This reporter exports spans to the [OpenCensus Agent](https://github.com/census-instrumentation/opencensus-service) in the standard [protobuf format](https://github.com/census-instrumentation/opencensus-proto) over [grpc](https://grpc.io/).
 
-Build
------
+To use, add `opencensus_service` dependency as a runtime application (in rebar3 this means add to the applications list of `.app.src`) and set as the reporter in the `opencensus` configuration:
 
-    $ rebar3 compile
+``` erlang
+{opencensus, [
+    {reporter, {oc_reporter_service, []}
+...]}
+```

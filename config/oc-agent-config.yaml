@@ -1,0 +1,6 @@
+receivers:
+  opencensus: {}
+
+exporters:
+  opencensus:
+    endpoint: "oc-collector:55678"
