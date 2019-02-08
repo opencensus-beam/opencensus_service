@@ -28,12 +28,6 @@ end_per_suite(_Config) ->
     ok = application:stop(opencensus),
     application:unload(opencensus).
 
-init_per_testcase(_, Config) ->
-    Config.
-
-end_per_testcase(_, _Config) ->
-    ok.
-
 round_trip(_Config) ->
     %% with defaults for optional fields
     SpanName = <<"round-trip-span-1">>,
@@ -42,7 +36,7 @@ round_trip(_Config) ->
                  span_id=8257235887736323202,
                  start_time={-576460693321990995, 2091207418848923700},
                  end_time={-576460679697900156, 2091207418848923700}},
-    PbSpan = oc_reporter_service:to_proto_map(Span),
+    PbSpan = oc_reporter_service:to_oc_proto(Span),
     Proto = trace_service_pb:encode_msg(PbSpan, span),
 
     PbSpan1 = maps:filter(fun(_, V) -> V =/= undefined end, PbSpan),
@@ -85,7 +79,7 @@ round_trip(_Config) ->
                                  message = <<"some status message">>},
                   same_process_as_parent_span=false,
                   child_span_count=3},
-    PbSpan2 = oc_reporter_service:to_proto_map(Span2),
+    PbSpan2 = oc_reporter_service:to_oc_proto(Span2),
     Proto2 = trace_service_pb:encode_msg(PbSpan2, span),
 
     PbSpan3 = maps:filter(fun(_, V) -> V =/= undefined end, PbSpan2),
