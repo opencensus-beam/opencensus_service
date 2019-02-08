@@ -2,8 +2,8 @@
 
 -behaviour(gen_statem).
 
--export([start_link/0,
-         report_spans/1]).
+-export([start_link/2,
+         report_spans/2]).
 
 -export([init/1,
          callback_mode/0,
@@ -20,29 +20,32 @@
 -define(LOG_ERROR(Format, Args), error_logger:error_msg(Format, Args)).
 -endif.
 
--record(data, {stream :: grpcbox_client:stream() | undefined}).
+-record(data, {channel_name :: atom(),
+               stream :: grpcbox_client:stream() | undefined}).
 
-start_link() ->
-    gen_statem:start_link({local, ?MODULE}, ?MODULE, [], []).
+start_link(Name, ChannelName) ->
+    gen_statem:start_link({local, Name}, ?MODULE, [ChannelName], []).
 
-report_spans(Spans) ->
-    case gen_statem:call(?MODULE, get_stream) of
+report_spans(Name, Spans) ->
+    case gen_statem:call(Name, get_stream) of
         {ok, Stream} ->
             _ = grpcbox_client:send(Stream, #{spans => Spans});
         _ ->
             {error, no_stream}
     end.
 
-init([]) ->
-    {ok, disconnected, #data{stream=undefined}}.
+init([ChannelName]) ->
+    {ok, disconnected, #data{channel_name=ChannelName,
+                             stream=undefined}}.
 
 callback_mode() ->
     [state_functions, state_enter].
 
 disconnected({call, _From}, get_stream, _Data) ->
     {keep_state_and_data, [{next_event, internal, connect}, postpone]};
-disconnected(internal, connect, Data=#data{stream=undefined}) ->
-    try oc_trace_client:export(ctx:new(), #{channel => opencensus_service}) of
+disconnected(internal, connect, Data=#data{channel_name=ChannelName,
+                                           stream=undefined}) ->
+    try oc_trace_client:export(ctx:new(), #{channel => ChannelName}) of
         {ok, Stream} ->
             {next_state, connected, Data#data{stream=Stream}}
     catch

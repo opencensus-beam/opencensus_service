@@ -27,13 +27,22 @@
 
 -export([to_oc_proto/1]).
 
-init(_Opts) ->
+init(Opts) ->
     %% in case this is called before the app has booted
-    application:ensure_all_started(opencensus_service).
+    _ = application:ensure_all_started(opencensus_service),
+    ChannelName = maps:get(channel_name, Opts, channel_service),
+    Name = list_to_atom(atom_to_list(ChannelName) ++ "_client_stream"),
+    Endpoints = maps:get(endpoints, Opts, [{http, "localhost", 55678, []}]),
+    Options = maps:get(options, Opts, #{}),
+    SupFlags = maps:get(sup_flags, Opts, #{strategy => one_for_one,
+                                           intensity => 1,
+                                           period => 5}),
+    opencensus_service_sup:start_child(Name, ChannelName, Endpoints, Options, SupFlags),
+    Name.
 
-report(Spans, _) ->
+report(Spans, Name) ->
     ProtoSpans = [to_oc_proto(Span) || Span <- Spans],
-    oc_reporter_client:report_spans(ProtoSpans),
+    oc_reporter_client:report_spans(Name, ProtoSpans),
     ok.
 
 to_oc_proto(#message_event{type=Type,
