@@ -13,6 +13,13 @@
          code_change/3,
          terminate/2]).
 
+-ifdef(OTP_RELEASE).
+-include_lib("kernel/include/logger.hrl").
+-else.
+-define(LOG_INFO(Format, Args), error_logger:info_msg(Format, Args)).
+-define(LOG_ERROR(Format, Args), error_logger:error_msg(Format, Args)).
+-endif.
+
 -record(data, {stream :: grpcbox_client:stream() | undefined}).
 
 start_link() ->
@@ -39,7 +46,8 @@ disconnected(internal, connect, Data=#data{stream=undefined}) ->
         {ok, Stream} ->
             {next_state, connected, Data#data{stream=Stream}}
     catch
-        _:_ ->
+        Class:Exception ->
+            ?LOG_INFO("creating export stream failed class=~p exception=~p", [Class, Exception]),
             {keep_state, Data#data{stream=undefined}}
     end;
 disconnected(enter, _, _Data) ->
