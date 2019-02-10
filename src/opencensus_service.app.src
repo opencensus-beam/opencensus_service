@@ -2,6 +2,7 @@
  [{description, "OpenCensus reporter for grpc OpenCensus service"},
   {vsn, "git"},
   {registered, []},
+  {mod, {opencensus_service_app, []}},
   {applications,
    [kernel,
     stdlib,

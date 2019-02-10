@@ -7,32 +7,24 @@
 
 -behaviour(supervisor).
 
-%% API
--export([start_link/0]).
+-export([start_link/0,
+         start_child/5]).
 
-%% Supervisor callbacks
 -export([init/1]).
 
 -define(SERVER, ?MODULE).
 
-%%====================================================================
-%% API functions
-%%====================================================================
-
 start_link() ->
     supervisor:start_link({local, ?SERVER}, ?MODULE, []).
 
-%%====================================================================
-%% Supervisor callbacks
-%%====================================================================
+start_child(Name, ChannelName, Endpoints, Options, SupFlags) ->
+    supervisor:start_child(?SERVER, [Name, ChannelName, Endpoints, Options, SupFlags]).
 
-%% Child :: #{id => Id, start => {M, F, A}}
-%% Optional keys are restart, shutdown, type, modules.
-%% Before OTP 18 tuples must be used to specify a child. e.g.
-%% Child :: {Id,StartFunc,Restart,Shutdown,Type,Modules}
 init([]) ->
-    {ok, {{one_for_all, 0, 1}, []}}.
-
-%%====================================================================
-%% Internal functions
-%%====================================================================
+    SupFlags = #{strategy => simple_one_for_one,
+                 intensity => 5,
+                 period => 10},
+    ChildSpec = #{id => oc_service_client_sup,
+                  start => {oc_service_client_sup, start_link, []},
+                  shutdown => 1000},
+    {ok, {SupFlags, [ChildSpec]}}.
