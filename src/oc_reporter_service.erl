@@ -143,8 +143,12 @@ to_oc_stack_trace(Frames) ->
 to_oc_attributes(Map) ->
     #{attribute_map => maps:map(fun(_, V) when is_binary(V) ->
                                         #{value => {string_value, trunc_string(V)}};
+                                   (_, V) when is_atom(V) ->
+                                        #{value => {string_value, trunc_string(atom_to_binary(V, utf8))}};
                                    (_, V) when is_integer(V) ->
                                         #{value => {int_value, V}};
+                                   (_, V) when is_float(V) ->
+                                        #{value => {double_value, V}};
                                    (_, V) when is_boolean(V) ->
                                         #{value => {bool_value, V}}
                                 end, Map),
@@ -181,4 +185,3 @@ trunc_string(V) when is_list(V) ->
 trunc_string(V) when is_binary(V) ->
     #{value => V,
       truncated_byte_count => 0}.
-
